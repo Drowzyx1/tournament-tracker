@@ -4,6 +4,13 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 export const authOptions: NextAuthOptions = {
+  // Pass this explicitly rather than relying on next-auth's implicit
+  // NEXTAUTH_SECRET lookup — on Vercel that lookup didn't resolve
+  // identically between this (Node) code path and the Edge middleware in
+  // middleware.ts, causing the two to disagree about whether a session
+  // cookie was valid and infinite-redirect-looping between "/" and
+  // "/dashboard". Explicit values sidestep the discrepancy entirely.
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: "Credentials",
