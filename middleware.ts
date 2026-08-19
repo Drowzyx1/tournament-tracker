@@ -1,23 +1,49 @@
-import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
+import type { NextRequest } from "next/server";
 
-// Redirect unauthenticated visitors to our own sign-in page ("/") instead of
-// NextAuth's default built-in page.
-//
-// `secret` is passed explicitly (matching lib/auth.ts) because relying on
-// next-auth's implicit NEXTAUTH_SECRET env lookup here vs. in
-// getServerSession() resolved inconsistently on Vercel, causing this Edge
-// middleware to reject session cookies that the Node server considered
-// valid — an infinite redirect loop between "/" and "/dashboard".
-export default withAuth({
-  pages: {
-    signIn: "/",
-  },
-  secret: process.env.NEXTAUTH_SECRET,
-});
+// TEMPORARY DIAGNOSTIC VERSION — replaces withAuth() with an equivalent
+// hand-rolled check that logs *presence* (never values) of the secret,
+// which cookies arrived, and whether getToken() could verify them. This is
+// to root-cause a redirect loop between "/" and "/dashboard" where the Node
+// server (getServerSession) and this Edge middleware disagree about the
+// same session cookie. Revert to withAuth() once root-caused.
+export async function middleware(req: NextRequest) {
+  const hasSecret = !!process.env.NEXTAUTH_SECRET;
+  const secretLength = process.env.NEXTAUTH_SECRET?.length ?? 0;
+  const cookieNames = req.cookies.getAll().map((c) => c.name);
+  const nextAuthUrl = process.env.NEXTAUTH_URL ?? null;
 
-// Only page routes are protected here. API routes check the session
-// themselves (see app/api/**) so they can return a clean 401 JSON response
-// instead of an HTML redirect when called via fetch().
+  let token = null;
+  let tokenError: string | null = null;
+  try {
+    token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  } catch (e) {
+    tokenError = e instanceof Error ? e.message : String(e);
+  }
+
+  console.log(
+    "[mw-debug]",
+    JSON.stringify({
+      hasSecret,
+      secretLength,
+      nextAuthUrl,
+      cookieNames,
+      hasToken: !!token,
+      tokenSub: token?.sub ?? null,
+      tokenError,
+      url: req.nextUrl.pathname,
+    })
+  );
+
+  if (!token) {
+    const url = new URL("/", req.url);
+    url.searchParams.set("callbackUrl", req.nextUrl.pathname);
+    return NextResponse.redirect(url);
+  }
+  return NextResponse.next();
+}
+
 export const config = {
   matcher: ["/dashboard/:path*"],
 };
