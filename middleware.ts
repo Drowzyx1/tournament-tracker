@@ -37,15 +37,32 @@ export async function middleware(req: NextRequest) {
     tokenError = e instanceof Error ? e.message : String(e);
   }
 
+  let tokenForcedSecure = null;
+  let tokenForcedSecureError: string | null = null;
+  try {
+    tokenForcedSecure = await getToken({
+      req,
+      secret: process.env.NEXTAUTH_SECRET,
+      secureCookie: true,
+      cookieName: "__Secure-next-auth.session-token",
+    });
+  } catch (e) {
+    tokenForcedSecureError = e instanceof Error ? e.message : String(e);
+  }
+
   const debugInfo = {
     hasSecret,
     secretLength,
     secretFingerprint,
     nextAuthUrl,
+    vercelEnv: process.env.VERCEL ?? null,
     cookieNames,
     hasToken: !!token,
     tokenSub: token?.sub ?? null,
     tokenError,
+    hasTokenForcedSecure: !!tokenForcedSecure,
+    tokenForcedSecureSub: tokenForcedSecure?.sub ?? null,
+    tokenForcedSecureError,
     url: req.nextUrl.pathname,
   };
 
