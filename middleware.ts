@@ -22,19 +22,23 @@ export async function middleware(req: NextRequest) {
     tokenError = e instanceof Error ? e.message : String(e);
   }
 
-  console.log(
-    "[mw-debug]",
-    JSON.stringify({
-      hasSecret,
-      secretLength,
-      nextAuthUrl,
-      cookieNames,
-      hasToken: !!token,
-      tokenSub: token?.sub ?? null,
-      tokenError,
-      url: req.nextUrl.pathname,
-    })
-  );
+  const debugInfo = {
+    hasSecret,
+    secretLength,
+    nextAuthUrl,
+    cookieNames,
+    hasToken: !!token,
+    tokenSub: token?.sub ?? null,
+    tokenError,
+    url: req.nextUrl.pathname,
+  };
+
+  // TEMPORARY: return the diagnostic payload directly in the response body
+  // (instead of only console.log, which wasn't showing up in Vercel's log
+  // viewer for Edge Middleware) so it can be read straight from `curl`.
+  if (req.nextUrl.searchParams.has("__debug")) {
+    return NextResponse.json(debugInfo);
+  }
 
   if (!token) {
     const url = new URL("/", req.url);
