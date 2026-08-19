@@ -57,18 +57,23 @@ npx prisma studio
    | Key | Value |
    |---|---|
    | `DATABASE_URL` | your Neon/Supabase connection string |
-   | `NEXTAUTH_URL` | leave blank for now, or set to `https://<project-name>.vercel.app` if you already know it |
+   | `NEXTAUTH_URL` | `https://<project-name>.vercel.app` — Vercel shows your project name on this same screen before you deploy, so you already know this URL. Get it exactly right (no trailing slash). |
    | `NEXTAUTH_SECRET` | output of `openssl rand -base64 32` |
+
+   **Don't add `NEXTAUTH_URL` with an empty value "to fill in later"** — an
+   empty string isn't a valid URL, and NextAuth crashes the build trying to
+   parse it (`TypeError: Invalid URL`, `input: ''`). Either set it to the
+   real value now, or don't add the key at all yet (see step 5).
 
 4. Click **Deploy**. Vercel will run `npm install` and `npm run build`
    (which also runs `prisma generate`).
 
-5. Once deployed, copy your real URL (e.g.
-   `https://tournament-tracker-xyz.vercel.app`).
-
-   - In Vercel: **Project Settings → Environment Variables**, set
-     `NEXTAUTH_URL` to that exact URL, then redeploy (**Deployments → ⋯ →
-     Redeploy**) so the new value takes effect.
+5. If the URL you guessed in step 3 turns out to be wrong (Vercel appended a
+   suffix because the name was taken), or you skipped adding `NEXTAUTH_URL`
+   entirely: copy your real deployed URL from the Vercel dashboard, then go
+   to **Project Settings → Environment Variables**, set `NEXTAUTH_URL` to
+   that exact value, and redeploy (**Deployments → ⋯ → Redeploy**) so the
+   new value takes effect.
 
 6. Visit your live URL, click **Create Account**, and sign up with an email
    and password. You should land on the dashboard.
@@ -94,6 +99,11 @@ so the live database matches the new schema.
   for Neon/Supabase.
 - **"An account with that email already exists"** — sign in instead of
   signing up, or use a different email.
+- **Build fails with `TypeError: Invalid URL` / `input: ''`, or "Error
+  occurred prerendering page"** — `NEXTAUTH_URL` is set in Vercel with an
+  empty value. Go to **Project Settings → Environment Variables**, either
+  delete that variable or set it to your real `https://...vercel.app` URL,
+  then redeploy.
 - **Works locally but not on Vercel** — check that all three environment
   variables (`DATABASE_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET`) are set in
   Vercel (Project Settings → Environment Variables) and that you redeployed
