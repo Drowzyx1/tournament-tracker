@@ -1,0 +1,66 @@
+// Prisma schema for Tournament Tracker
+// Docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ---- Auth ----
+// Email + password auth, no external provider — passwords are hashed with
+// bcrypt and stored right in our own database.
+
+model User {
+  id           String   @id @default(cuid())
+  name         String?
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  trips Trip[]
+}
+
+// ---- App models ----
+
+model Trip {
+  id        String   @id @default(cuid())
+  name      String
+  eventDate DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  transactions Transaction[]
+
+  @@index([userId])
+}
+
+enum TransactionType {
+  EXPENSE
+  EARNING
+}
+
+model Transaction {
+  id        String           @id @default(cuid())
+  type      TransactionType
+  desc      String
+  amount    Float
+  date      DateTime?
+  notes     String?          @db.Text
+  // Screenshot/receipt attachment, stored inline as a data URL
+  // ("data:image/png;base64,...") — see lib/attachments.ts for size/type limits.
+  attachmentData String?     @db.Text
+  attachmentName String?
+  createdAt DateTime         @default(now())
+
+  tripId String
+  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+}
