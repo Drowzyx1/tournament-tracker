@@ -329,6 +329,7 @@ input {
 }
 .trip-item .ti-main {
   min-width: 0;
+  flex: 1;
 }
 .trip-item .ti-name {
   font-size: 13.5px;
@@ -952,6 +953,56 @@ input {
   .lightbox-close {
     top: 12px;
     right: 12px;
+  }
+}
+
+/* Touch devices: no hover, so hover-only controls must always be visible. */
+@media (hover: none) {
+  .trip-item .ti-del {
+    display: inline-block;
+  }
+}
+
+/* Phones: iOS Safari zooms the page when focusing an input under 16px, and
+   the icon buttons are too small to tap reliably. */
+@media (max-width: 860px) {
+  input,
+  textarea,
+  select,
+  .auth-form .field input,
+  .field input,
+  .edit-row input,
+  .tx-form-notes textarea {
+    font-size: 16px;
+  }
+  .tx-edit,
+  .tx-del,
+  .trip-item .ti-del {
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+  .btn-signout {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  .btn-new-trip,
+  .tx-form-actions button,
+  .edit-row button {
+    min-height: 44px;
+  }
+  .sidebar-header {
+    padding-top: max(18px, env(safe-area-inset-top));
+  }
+  .main {
+    padding-bottom: max(40px, env(safe-area-inset-bottom));
   }
 }
 
